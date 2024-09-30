@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1726672028376,
+      "tag": "0000_round_chat",
+      "breakpoints": true
+    }
+  ]
+}
