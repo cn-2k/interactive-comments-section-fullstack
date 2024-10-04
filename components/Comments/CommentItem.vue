@@ -32,8 +32,8 @@
             <p class="text-sm text-neutral-grayish-blue ml-2 dark:text-gray-400">
               <time
                 pubdate
-                :title="props.date"
-              >{{ useTimeAgo(props.date!) }}</time>
+                :title="props.createdAt"
+              >{{ useTimeAgo(props.createdAt!) }}</time>
             </p>
           </div>
         </div>
@@ -83,6 +83,7 @@
           color="base"
           variant="link"
           label="Reply"
+          @click="handleReply(props)"
         />
         <UButton
           v-if="props.isMe"
@@ -134,7 +135,7 @@
           rows="3"
           :spellcheck="isEditing ? true : false"
           class="border order-1 w-full resize-none border-gray-200 dark:focus:border-gray-600 dark:border-gray-700 dark:text-zinc-50 dark:bg-transparent rounded p-3 focus:outline-none focus:border focus:border-base-moderate-blue"
-          :placeholder="replyingTo ? `Replying to @${replyingTo}` : 'Add a comment...'"
+          :placeholder="props.replyingTo ? `Replying to @${props.replyingTo}` : 'Add a comment...'"
           required
         />
 
@@ -142,14 +143,16 @@
           <UButton
             class="px-4 justify-center py-3"
             color="base"
-            :label="props.isNewComment && props.isReplying ? 'REPLY' : 'SEND'"
+            :label="isNewComment && props.isReplying ? 'REPLY' : 'SEND'"
             :disabled="!input"
+            @click="handleSendComment"
           />
           <UButton
             v-if="props.isNewComment && props.isReplying"
             class="px-4 justify-center py-3"
             color="red"
             label="CANCEL"
+            @click="handleCancelReply"
           />
         </div>
       </div>
@@ -160,18 +163,32 @@
 <script lang="ts" setup>
 import { useTimeAgo } from "@vueuse/core"
 import CommentScore from "./CommentScore.vue"
-import type { CommentProps } from "~/types/comment"
+import type { CommentDBProps } from "@/types/db"
 import type { GitHubUser } from "~/types/user"
 
-const props = withDefaults(defineProps<Partial<CommentProps>>(), {
-  isReplying: false,
+interface ExtraProps {
+  replyingTo?: string
+  isReplying?: boolean
+}
+
+const props = withDefaults(defineProps<CommentDBProps & ExtraProps>(), {
   isMe: false,
   isNewComment: false,
   likes: 0,
+  isReplying: false,
 })
+
+const emit = defineEmits<{
+  send: [value: string]
+}>()
 
 const isEditing = ref<boolean>(false)
 const user: GitHubUser = await fetchGithubUser()
+
+const {
+  handleReply,
+  handleCancelReply,
+} = useComments()
 
 const vFocus = {
   mounted: (el: any) => el.focus(),
@@ -181,6 +198,11 @@ const { textarea: textAreaRef, input } = useTextareaAutosize({
   input: props.content,
   styleProp: "minHeight",
 })
+
+const handleSendComment = () => {
+  emit("send", input.value)
+  input.value = ""
+}
 </script>
 
 <style lang="postcss" scoped>

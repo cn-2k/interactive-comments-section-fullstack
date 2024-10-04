@@ -8,3 +8,5 @@ export const tables = schema
 export function useDrizzle() {
   return drizzle(hubDatabase(), { schema })
 }
+
+// export type CommentPropsDB = typeof schema.comments.$inferSelect

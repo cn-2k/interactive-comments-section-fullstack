@@ -31,9 +31,9 @@
 <script lang="ts" setup>
 const props = defineProps<{
   isMe: boolean
-  commentDisliked: boolean | undefined
-  commentLiked: boolean | undefined
-  commentId: string
-  likes: number
+  commentDisliked: boolean | null
+  commentLiked: boolean | null
+  commentId: number | null
+  likes: number | null
 }>()
 </script>

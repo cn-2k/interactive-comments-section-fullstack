@@ -10,18 +10,7 @@
         class="relative flex flex-col"
       >
         <!-- Individual Comment -->
-        <CommentItem
-          :id="comment.id"
-          :name="comment.name"
-          :avatar="comment.avatar"
-          :date="comment.createdAt"
-          :content="comment.content"
-          :comment-liked="comment.commentLiked"
-          :comment-disliked="comment.commentDisliked"
-          :likes="comment.likes"
-          :is-me="comment.isMe"
-          @delete="() => openDeleteModal(comment)"
-        />
+        <CommentItem v-bind="comment" />
 
         <!-- Replies and Reply area for new replies -->
         <!-- <div
@@ -35,7 +24,6 @@
             :key="reply.id"
             v-bind="reply"
             is-reply
-            @delete="() => openDeleteModal(reply, comment.id)"
           />
 
           <CommentItem
@@ -62,22 +50,16 @@
 
     <!-- New comment -->
     <CommentItem
-      avatar="https://flowbite.com/docs/images/people/profile-picture-1.jpg"
+      :avatar="user.avatar_url"
       is-new-comment
       is-me
-      @send="sendComment"
+      @send="(content: string) => sendComment(content)"
     />
-
-    <pre>{{ comments }}</pre>
   </div>
 
   <!-- Delete comment dialog -->
-  <UModal
-    v-model="deleteDialog"
-  >
-    <div
-      class="p-7 flex flex-col gap-6"
-    >
+  <UModal v-model="deleteDialog">
+    <div class="p-7 flex flex-col gap-6">
       <h1 class="text-xl font-medium text-neutral-dark-blue dark:text-white">
         Delete comment
       </h1>
@@ -103,11 +85,56 @@
 </template>
 
 <script lang="ts" setup>
+import { ref } from "vue"
 import CommentItem from "./CommentItem.vue"
-import { getCommentsAdapter } from "@/server/utils/adapters"
+import type { CommentDBProps } from "~/types/db"
+import type { GitHubUser } from "~/types/user"
 
-const { data } = await useAsyncData("comments", () =>
-  $fetch(`/api/comments`))
+// Carregar os comentários com um valor padrão de array vazio e armazenar em um ref
+const { data: initialComments } = await useFetch<CommentDBProps[]>("/api/comments", {
+  default: () => [],
+})
 
-const comments = getCommentsAdapter(data.value)
+// Transformamos a lista de comentários em um ref para ser reativo e manipulável localmente
+const comments = ref<CommentDBProps[]>(initialComments.value || [])
+
+// Carregar o usuário
+const user: GitHubUser = await fetchGithubUser()
+
+const {
+  replyingToId,
+  replyingName,
+} = useComments()
+
+// Função para adicionar o novo comentário à lista localmente
+const addNewComment = (newComment: CommentDBProps) => {
+  comments.value.push(newComment) // Adiciona o novo comentário no início da lista
+}
+
+const sendComment = async (content: string) => {
+  try {
+    const newComment = {
+      name: user.name,
+      content: content,
+      avatar: user.avatar_url,
+      isMe: true,
+      createdAt: new Date().toISOString(),
+      id: Date.now(),
+    }
+
+    // Atualiza localmente antes da resposta
+    addNewComment(newComment)
+
+    // Enviar o comentário para a API
+    const response = await $fetch("/api/comments", {
+      method: "POST",
+      body: newComment,
+    })
+
+    console.log("Comentário enviado com sucesso:", response)
+  }
+  catch (error) {
+    console.error("Erro ao enviar comentário:", error)
+  }
+}
 </script>
