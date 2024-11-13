@@ -1,19 +1,24 @@
 <template>
   <div
+    v-if="comments"
     v-auto-animate
     class="w-full px-5 lg:w-[800px] space-y-4"
   >
-    <template v-if="comments?.length">
+    <template v-if="comments.length">
       <div
         v-for="comment in comments"
         :key="comment.id"
         class="relative flex flex-col"
       >
         <!-- Individual Comment -->
-        <CommentItem v-bind="comment" />
+        <CommentItem
+          v-bind="comment"
+          @update="(content) => updateComment(content, comment.id!)"
+          @delete="commentToDeleteId = comment.id, deleteDialog = true"
+        />
 
         <!-- Replies and Reply area for new replies -->
-        <!-- <div
+        <div
           v-auto-animate
           class="pl-8 lg:pl-20 space-y-4 relative"
         >
@@ -24,25 +29,26 @@
             :key="reply.id"
             v-bind="reply"
             is-reply
+            @delete="commentToDeleteId = reply.id, deleteDialog = true"
           />
 
           <CommentItem
             v-if="replyingToId === comment.id || comment.replies?.some(reply => reply.id === replyingToId)"
-            :id="replyingToId"
             :replying-to="replyingName"
             avatar="https://flowbite.com/docs/images/people/profile-picture-1.jpg"
             is-new-comment
             is-replying
             is-me
             is-reply
+            @send="(content: string) => replyComment(content)"
           />
-        </div> -->
+        </div>
       </div>
     </template>
 
     <!-- No comments message -->
     <div
-      v-if="!comments?.length"
+      v-if="!comments.length"
       class="text-gray-400"
     >
       Ainda não há nenhum comentário, seja o primeiro!
@@ -52,7 +58,6 @@
     <CommentItem
       :avatar="user.avatar_url"
       is-new-comment
-      is-me
       @send="(content: string) => sendComment(content)"
     />
   </div>
@@ -77,7 +82,7 @@
           label="YES, DELETE"
           color="base"
           class="bg-base-soft-red dark:text-white hover:bg-base-soft-red/50 px-6 py-2.5 transition-colors"
-          @click="confirmDelete"
+          @click="deleteComment(commentToDeleteId), deleteDialog = false"
         />
       </div>
     </div>
@@ -91,50 +96,95 @@ import type { CommentDBProps } from "~/types/db"
 import type { GitHubUser } from "~/types/user"
 
 // Carregar os comentários com um valor padrão de array vazio e armazenar em um ref
-const { data: initialComments } = await useFetch<CommentDBProps[]>("/api/comments", {
-  default: () => [],
-})
+const { data: comments, refresh } = await useFetch<CommentDBProps[]>("/api/comments")
 
 // Transformamos a lista de comentários em um ref para ser reativo e manipulável localmente
-const comments = ref<CommentDBProps[]>(initialComments.value || [])
+const commentToDeleteId = ref<number | null>(null)
 
 // Carregar o usuário
 const user: GitHubUser = await fetchGithubUser()
+
+const deleteDialog = ref<boolean>(false)
 
 const {
   replyingToId,
   replyingName,
 } = useComments()
 
-// Função para adicionar o novo comentário à lista localmente
-const addNewComment = (newComment: CommentDBProps) => {
-  comments.value.push(newComment) // Adiciona o novo comentário no início da lista
-}
-
 const sendComment = async (content: string) => {
   try {
     const newComment = {
       name: user.name,
+      userId: user.id,
       content: content,
       avatar: user.avatar_url,
-      isMe: true,
       createdAt: new Date().toISOString(),
-      id: Date.now(),
     }
 
-    // Atualiza localmente antes da resposta
-    addNewComment(newComment)
-
-    // Enviar o comentário para a API
-    const response = await $fetch("/api/comments", {
+    await $fetch("/api/comments", {
       method: "POST",
       body: newComment,
     })
 
-    console.log("Comentário enviado com sucesso:", response)
+    refresh()
   }
   catch (error) {
-    console.error("Erro ao enviar comentário:", error)
+    console.log(error)
+  }
+}
+
+const replyComment = async (content: string) => {
+  try {
+    const newComment = {
+      name: user.name,
+      userId: user.id,
+      content: content,
+      avatar: user.avatar_url,
+      parentId: replyingToId.value,
+      isReply: true,
+      createdAt: new Date().toISOString(),
+    }
+
+    await $fetch("/api/comments", {
+      method: "POST",
+      body: newComment,
+    })
+
+    refresh()
+  }
+  catch (error) {
+    console.log(error)
+  }
+}
+
+const updateComment = async (content: string, comment_id: number) => {
+  try {
+    const updatedComment = {
+      content: content,
+    }
+
+    await $fetch(`/api/comments/${comment_id}`, {
+      method: "PATCH",
+      body: updatedComment,
+    })
+
+    refresh()
+  }
+  catch (error) {
+    console.log(error)
+  }
+}
+
+const deleteComment = async (comment_id: number | null) => {
+  try {
+    await $fetch(`/api/comments/${comment_id}`, {
+      method: "DELETE",
+    })
+
+    refresh()
+  }
+  catch (error) {
+    console.log(error)
   }
 }
 </script>

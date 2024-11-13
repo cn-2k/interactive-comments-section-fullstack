@@ -5,15 +5,14 @@
       <CommentScore
         :comment-disliked="props.commentDisliked"
         :comment-liked="props.commentLiked"
-        :comment-id="props.id"
-        :is-me="props.isMe"
+        :comment-id="props.id!"
         :likes="props.likes"
+        :is-author="isCommentAuthor"
       />
 
       <!-- Comment Content -->
       <div
-
-        class="comment-content flex flex-col w-full text-ellipsis overflow-hidden gap-4"
+        class="comment-content flex flex-col w-full text-ellipsis overflow-hidden gap-4 p-2"
       >
         <!-- Comment Author  -->
         <div class="flex justify-between items-center">
@@ -22,11 +21,11 @@
               <img
                 class="size-7 rounded-full"
                 :src="props.avatar"
-                alt="Michael Gough"
+                :alt="props.name"
               >{{ props.name }}
             </p>
             <span
-              v-if="props.isMe"
+              v-if="isCommentAuthor"
               class="text-xs font-medium rounded-sm bg-base-moderate-blue text-white px-2 py-0.5"
             >you</span>
             <p class="text-sm text-neutral-grayish-blue ml-2 dark:text-gray-400">
@@ -71,13 +70,14 @@
           class="self-end px-8 py-3 transition-colors"
           color="base"
           label="UPDATE"
+          @click="handleUpdateComment"
         />
       </div>
 
       <!-- Comment Actions  -->
       <div class="absolute right-2 bottom-[30px] sm:top-4 h-fit">
         <UButton
-          v-if="!props.isMe"
+          v-if="!isCommentAuthor"
           icon="i-ic-baseline-reply"
           size="sm"
           color="base"
@@ -86,15 +86,16 @@
           @click="handleReply(props)"
         />
         <UButton
-          v-if="props.isMe"
+          v-if="isCommentAuthor"
           icon="i-material-symbols-delete"
           size="sm"
           color="red"
           variant="link"
           label="Delete"
+          @click="emit('delete')"
         />
         <UButton
-          v-if="props.isMe && !isEditing"
+          v-if="!isEditing && isCommentAuthor"
           icon="i-material-symbols-edit"
           size="sm"
           color="base"
@@ -103,7 +104,7 @@
           @click="isEditing = true"
         />
         <UButton
-          v-if="props.isMe && isEditing"
+          v-if="isEditing"
           icon="i-material-symbols-cancel"
           size="sm"
           color="red"
@@ -172,7 +173,6 @@ interface ExtraProps {
 }
 
 const props = withDefaults(defineProps<CommentDBProps & ExtraProps>(), {
-  isMe: false,
   isNewComment: false,
   likes: 0,
   isReplying: false,
@@ -180,6 +180,8 @@ const props = withDefaults(defineProps<CommentDBProps & ExtraProps>(), {
 
 const emit = defineEmits<{
   send: [value: string]
+  update: [value: string]
+  delete: []
 }>()
 
 const isEditing = ref<boolean>(false)
@@ -199,9 +201,18 @@ const { textarea: textAreaRef, input } = useTextareaAutosize({
   styleProp: "minHeight",
 })
 
+const isCommentAuthor = computed(() => {
+  return props.userId === user.id
+})
+
 const handleSendComment = () => {
   emit("send", input.value)
   input.value = ""
+}
+
+const handleUpdateComment = () => {
+  emit("update", input.value)
+  isEditing.value = false
 }
 </script>
 
