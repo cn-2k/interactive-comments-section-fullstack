@@ -22,12 +22,18 @@ export const fetchGithubUser = async () => {
   return user.value as GitHubUser
 }
 
-export const githubLogin = () => {
-  if (import.meta.client) {
-    const { github } = useRuntimeConfig().public
-    window.location.replace(
-      `https://github.com/login/oauth/authorize?client_id=${github.clientId}&scope=public_repo`,
-    )
+export const githubLogin = async () => {
+  try {
+    if (import.meta.client) {
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      const { github } = useRuntimeConfig().public
+      window.location.replace(
+        `https://github.com/login/oauth/authorize?client_id=${github.clientId}&scope=public_repo`,
+      )
+    }
+  }
+  catch (error) {
+    console.error("Login failed:", error)
   }
 }
 

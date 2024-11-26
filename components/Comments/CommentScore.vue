@@ -1,6 +1,6 @@
 <template>
-  <div class="comment-score flex items-center justify-between w-fit sm:items-start sm:mr-4">
-    <div class="inline-flex py-1.5 sm:py-2 sm:gap-3 px-2 sm:px-0 justify-center items-center rounded-lg bg-base-light-grayish-blue/15 sm:flex-col">
+  <div class="flex items-center justify-between w-fit sm:items-start sm:mr-4">
+    <div class="inline-flex py-1.5 sm:gap-1 px-2 sm:px-0 justify-center items-center rounded-lg bg-base-light-grayish-blue/15 sm:flex-col">
       <UButton
         variant="link"
         color="blue"

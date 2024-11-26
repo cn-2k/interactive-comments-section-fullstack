@@ -9,7 +9,7 @@
             Login
           </p>
           <div class="text-gray-500 dark:text-gray-400 mt-1">
-            Use your GitHub account to sign in!
+            Use your GitHub account to sign in and comment!
           </div>
         </div>
 
@@ -19,26 +19,36 @@
               icon="i-mdi-github"
               size="lg"
               block
+              :loading="isSignIn"
               class="rounded-full"
               color="white"
               variant="solid"
-              label="Continue with Github"
-              @click="login"
+              :label="isSignIn ? 'Please wait...' : 'Continue with Github'"
+              @click="handleLogin"
             />
           </div>
         </div>
-
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
-          By signing in, you agree to our <a
-            href="/"
-            class="text-primary font-medium"
-          >Terms of Service</a>.
-        </p>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-const login = githubLogin
+const isSignIn = ref<boolean>(false)
+
+const handleLogin = async () => {
+  try {
+    isSignIn.value = true
+    await githubLogin()
+    const user = await fetchGithubUser()
+    if (user) {
+      console.log("Login bem-sucedido:", user)
+      isSignIn.value = false
+    }
+  }
+  catch (error) {
+    console.error("Erro ao fazer login:", error)
+    isSignIn.value = false
+  }
+}
 </script>

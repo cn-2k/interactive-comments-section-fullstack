@@ -21,7 +21,6 @@ useHead({
 <template>
   <div>
     <ClientOnly>
-      <!-- Alterado para left-8 -->
       <ColorModePicker class="top-5 left-full mr-10 z-50 sticky" />
       <template #fallback>
         <div class="top-5 left-full mr-10 z-50 sticky" />
