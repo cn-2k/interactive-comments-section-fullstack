@@ -51,7 +51,7 @@
       v-if="!comments.length"
       class="text-gray-400"
     >
-      Ainda não há nenhum comentário, seja o primeiro!
+      There's no comments yet, be the <strong>first one!</strong> 😆
     </div>
 
     <!-- New comment -->
