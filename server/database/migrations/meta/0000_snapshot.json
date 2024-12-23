@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6cc30656-9e80-429a-9bbe-dc7cc7dffc26",
+  "id": "0a016ed2-edef-44ec-a785-7df988ab0a30",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "comments": {
@@ -114,9 +114,11 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     }
   },
+  "views": {},
   "enums": {},
   "_meta": {
     "schemas": {},
