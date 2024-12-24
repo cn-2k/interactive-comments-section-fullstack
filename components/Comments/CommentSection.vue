@@ -13,7 +13,7 @@
         <!-- Individual Comment -->
         <CommentItem
           v-bind="comment"
-          @update="(content) => updateComment(content, comment.id!)"
+          @update="(content) => handleUpdateComment({ updatedComment: { content }, commentId: comment.id! })"
           @delete="commentToDeleteId = comment.id, deleteDialog = true"
         />
 
@@ -40,7 +40,7 @@
             is-replying
             is-me
             is-reply
-            @send="(content: string) => replyComment(content)"
+            @send="(content: string) => handleSendComment({ content, isReply: true })"
           />
         </div>
       </div>
@@ -58,7 +58,7 @@
     <CommentItem
       :avatar="user.avatar_url"
       is-new-comment
-      @send="(content: string) => sendComment(content)"
+      @send="(content: string) => handleSendComment({ content })"
     />
   </div>
 
@@ -82,7 +82,7 @@
           label="YES, DELETE"
           color="base"
           class="bg-base-soft-red dark:text-white hover:bg-base-soft-red/50 px-6 py-2.5 transition-colors"
-          @click="deleteComment(commentToDeleteId), deleteDialog = false"
+          @click="handleDeleteComment(commentToDeleteId), deleteDialog = false"
         />
       </div>
     </div>
@@ -92,17 +92,11 @@
 <script lang="ts" setup>
 import { ref } from "vue"
 import CommentItem from "./CommentItem.vue"
-import type { CommentDBProps } from "~/types/db"
+import { useCommentsQuery } from "@/api/queries/comments"
+import { useAddNewComment, useUpdateComment, useDeleteComment } from "@/api/mutations/comments"
 import type { GitHubUser } from "~/types/user"
 
-// Carregar os comentários com um valor padrão de array vazio e armazenar em um ref
-const { data: comments, refresh } = await useFetch<CommentDBProps[]>("/api/comments")
-
-// Transformamos a lista de comentários em um ref para ser reativo e manipulável localmente
 const commentToDeleteId = ref<number | null>(null)
-
-// Carregar o usuário
-const user: GitHubUser = await fetchGithubUser()
 
 const deleteDialog = ref<boolean>(false)
 
@@ -111,80 +105,10 @@ const {
   replyingName,
 } = useComments()
 
-const sendComment = async (content: string) => {
-  try {
-    const newComment = {
-      name: user.name,
-      userId: user.id,
-      content: content,
-      avatar: user.avatar_url,
-      createdAt: new Date().toISOString(),
-    }
+const { data: comments } = useCommentsQuery()
+const { handleSendComment } = useAddNewComment()
+const { handleUpdateComment } = useUpdateComment()
+const { handleDeleteComment } = useDeleteComment()
 
-    await $fetch("/api/comments", {
-      method: "POST",
-      body: newComment,
-    })
-
-    refresh()
-  }
-  catch (error) {
-    console.log(error)
-  }
-}
-
-const replyComment = async (content: string) => {
-  try {
-    const newComment = {
-      name: user.name,
-      userId: user.id,
-      content: content,
-      avatar: user.avatar_url,
-      parentId: replyingToId.value,
-      isReply: true,
-      createdAt: new Date().toISOString(),
-    }
-
-    await $fetch("/api/comments", {
-      method: "POST",
-      body: newComment,
-    })
-
-    refresh()
-  }
-  catch (error) {
-    console.log(error)
-  }
-}
-
-const updateComment = async (content: string, comment_id: number) => {
-  try {
-    const updatedComment = {
-      content: content,
-    }
-
-    await $fetch(`/api/comments/${comment_id}`, {
-      method: "PATCH",
-      body: updatedComment,
-    })
-
-    refresh()
-  }
-  catch (error) {
-    console.log(error)
-  }
-}
-
-const deleteComment = async (comment_id: number | null) => {
-  try {
-    await $fetch(`/api/comments/${comment_id}`, {
-      method: "DELETE",
-    })
-
-    refresh()
-  }
-  catch (error) {
-    console.log(error)
-  }
-}
+const user: GitHubUser = await fetchGithubUser()
 </script>

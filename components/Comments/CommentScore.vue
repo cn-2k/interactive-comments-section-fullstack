@@ -25,7 +25,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue"
+import { useUpdateComment } from "@/api/mutations/comments"
 
 const props = defineProps<{
   commentDisliked: boolean
@@ -34,6 +34,8 @@ const props = defineProps<{
   likes: number
   isAuthor: boolean
 }>()
+
+const { handleUpdateComment } = useUpdateComment()
 
 const currentLikes = ref(props.likes)
 const hasUserLiked = ref(props.commentLiked)
@@ -48,14 +50,11 @@ const handleVoteAction = async (voteType: "upvote" | "downvote") => {
   currentLikes.value = updatedLikes
 
   try {
-    await $fetch(`/api/comments/${props.commentId}`, {
-      method: "PATCH",
-      body: {
-        likes: updatedLikes,
-        commentLiked: hasUserLiked.value,
-        commentDisliked: hasUserDisliked.value,
-      },
-    })
+    await handleUpdateComment({ updatedComment: {
+      likes: updatedLikes,
+      commentLiked: hasUserLiked.value,
+      commentDisliked: hasUserDisliked.value,
+    }, commentId: props.commentId })
   }
   catch (error) {
     currentLikes.value = voteType === "upvote" ? updatedLikes - 1 : updatedLikes + 1

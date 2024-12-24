@@ -7,6 +7,8 @@ export default defineNuxtConfig({
     "@nuxtjs/google-fonts",
     "@vueuse/nuxt",
     "@formkit/auto-animate/nuxt",
+    "@pinia/nuxt",
+    "@pinia/colada-nuxt",
   ],
   ssr: false,
   devtools: { enabled: true },
